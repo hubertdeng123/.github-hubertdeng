@@ -18,7 +18,7 @@ jobs:
       &&
       !contains(github.event.issue.labels.*.name, 'Status: In Progress')
     steps:
-      - name: "Check to make sure issue creator is not a Sentry org member"
+      - name: "Check Membership of issue creator"
         id: "check_membership"
         env:
           issue_number: ${{ github.event.issue.number }}
@@ -30,8 +30,11 @@ jobs:
           team_label: ${{ github.event.label.name }}
           issue_number: ${{ github.event.issue.number }}
           membership: ${{ steps.check_membership.outputs.membership }}
+        if: >-
+          membership != "OWNER"
+          &&
+          membership != "MEMBER"
         run: |
-          echo $membership
           labels_to_remove=$(gh api --paginate "/repos/$GH_REPO/labels" -q '[.[].name | select((startswith("Team: ") or startswith("Status: ")) and . != "${{ github.event.label.name }}" and . != "Status: Untriaged")] | join(",")')
           gh issue edit ${{ github.event.issue.number }} --remove-label "$labels_to_remove" --add-label '${{ github.event.label.name }},Status: Untriaged'
       - name: "Mention/ping assigned team for triage"
@@ -39,6 +42,10 @@ jobs:
           team_label: ${{ github.event.label.name }}
           issue_number: ${{ github.event.issue.number }}
           membership: ${{ steps.check_membership.outputs.membership }}
+        if: >-
+          membership != "OWNER"
+          &&
+          membership != "MEMBER"
         run: |
           # Get team label mention name:
           team_label='${{ github.event.label.name }}'
