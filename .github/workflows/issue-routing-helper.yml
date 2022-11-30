@@ -24,7 +24,7 @@ jobs:
           issue_number: ${{ github.event.issue.number }}
         run: |
           author_association=$(gh api "repos/$GH_REPO/issues/$issue_number" -q .author_association)
-          echo "::set-output membership=$author_association"
+          echo "membership=$author_association" >> $GITHUB_OUTPUT
       - name: "Ensure a single 'Team: *' label with 'Status: Untriaged'"
         env:
           team_label: ${{ github.event.label.name }}
