@@ -19,15 +19,16 @@ jobs:
       !contains(github.event.issue.labels.*.name, 'Status: In Progress')
     steps:
       - name: "Check to make sure issue creator is not a Sentry org member"
+        id: "check_membership"
         env:
           issue_number: ${{ github.event.issue.number }}
         run: |
           author_association=$(gh api "repos/$GH_REPO/issues/$issue_number" -q .author_association)
-          if [[ "$author_association" = "MEMBER" || "$author_association" = "OWNER" ]]; then
-            echo "Skipping routing logic since issue is opened by a Sentry org member."
-            exit 0
-          fi
       - name: "Ensure a single 'Team: *' label with 'Status: Untriaged'"
+        if: >-
+          steps.check_membership.author_association != 'OWNER'
+          &&
+          steps.check_membership.author_association != 'MEMBER'
         env:
           team_label: ${{ github.event.label.name }}
           issue_number: ${{ github.event.issue.number }}
@@ -35,6 +36,10 @@ jobs:
           labels_to_remove="$(gh api --paginate "/repos/$GH_REPO/labels" | jq -r --arg label_name "$team_label" '[.[].name | select((startswith("Team: ") or startswith("Status: ")) and . != $label_name and . != "Status: Untriaged")] | join(",")')
           gh issue edit "$issue_number" --remove-label "$labels_to_remove" --add-label "${team_label},Status: Untriaged"
       - name: "Mention/ping assigned team for triage"
+        if: >-
+          steps.check_membership.author_association != 'OWNER'
+          &&
+          steps.check_membership.author_association != 'MEMBER'
         env:
           team_label: ${{ github.event.label.name }}
           issue_number: ${{ github.event.issue.number }}
