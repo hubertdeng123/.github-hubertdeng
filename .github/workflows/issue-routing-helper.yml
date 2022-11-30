@@ -31,9 +31,9 @@ jobs:
           issue_number: ${{ github.event.issue.number }}
           membership: ${{ steps.check_membership.outputs.membership }}
         if: >-
-          env.membership != "OWNER"
+          env.membership != 'OWNER'
           &&
-          env.membership != "MEMBER"
+          env.membership != 'MEMBER'
         run: |
           labels_to_remove=$(gh api --paginate "/repos/$GH_REPO/labels" -q '[.[].name | select((startswith("Team: ") or startswith("Status: ")) and . != "${{ github.event.label.name }}" and . != "Status: Untriaged")] | join(",")')
           gh issue edit ${{ github.event.issue.number }} --remove-label "$labels_to_remove" --add-label '${{ github.event.label.name }},Status: Untriaged'
@@ -43,9 +43,9 @@ jobs:
           issue_number: ${{ github.event.issue.number }}
           membership: ${{ steps.check_membership.outputs.membership }}
         if: >-
-          env.membership != "OWNER"
+          env.membership != 'OWNER'
           &&
-          env.membership != "MEMBER"
+          env.membership != 'MEMBER'
         run: |
           # Get team label mention name:
           team_label='${{ github.event.label.name }}'
